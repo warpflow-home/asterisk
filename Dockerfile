@@ -3,12 +3,13 @@ FROM andrius/asterisk:latest
 USER root
 
 # libvorbis, curl, およびルート証明書(ca-certificates)をインストール
+# (変更後) cups-ipp-utils に修正します
 RUN apt-get update && apt-get install -y \
     libvorbisenc2 \
     curl \
     ca-certificates \
     libtiff-tools \
-    cups-ipputils \
+    cups-ipp-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # CDRディレクトリの作成、権限設定、不要なusers.confの削除
