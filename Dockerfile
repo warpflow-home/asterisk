@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     libtiff-tools \
-    netcat-openbsd \
+    cups-ipputils \
     && rm -rf /var/lib/apt/lists/*
 
 # CDRディレクトリの作成、権限設定、不要なusers.confの削除
