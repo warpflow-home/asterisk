@@ -1,26 +1,56 @@
 #!/bin/bash
 
+# extensions.conf から渡された引数
 FAXFILE=$1
 FAXSTATUS=$2
+
+FILENAME=$(basename "$FAXFILE")
+DATETIME=$(date '+%Y-%m-%d %H:%M:%S')
 PDFFILE="${FAXFILE%.*}.pdf"
 
-# 1. FAX受信失敗時のダミー処理
+# =========================================================
+# 1. ファイルの存在チェックと通知
+# =========================================================
 if [ ! -f "$FAXFILE" ]; then
-    curl -H "Title: FAX受信失敗" -d "画像がないためダミーを印刷します" https://ntfy.sh/KxgaRAdAYycAOnTS
+    # FAX受信失敗時（内線電話でのテストなど）
+    curl -H "Title: FAX受信失敗" \
+         -H "Priority: high" \
+         -H "Tags: warning" \
+         -d "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。通信テストとしてダミーPDFを印刷します。" \
+         https://ntfy.sh/KxgaRAdAYycAOnTS
+    
+    # テスト用のダミーPDFをダウンロード
     curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
 else
-    # 2. 正常受信時のTIFF -> PDF変換
+    # 実際のFAX受信成功時
+    curl -H "Title: FAX受信完了" \
+         -H "Priority: default" \
+         -H "Tags: fax,page_facing_up" \
+         -d "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}" \
+         https://ntfy.sh/KxgaRAdAYycAOnTS
+    
+    # TIFFをPDFに変換 (A4サイズ指定)
     tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
 fi
 
-# 3. CUPS（localhost:631）経由で印刷実行
-# -h localhost:631 は hostnet を使っているため有効です
+# =========================================================
+# 2. CUPS経由で印刷実行
+# =========================================================
+# -h localhost:631 は hostnet 環境でのCUPSコンテナ宛て
 lp -h localhost:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
-    curl -H "Title: FAX印刷成功" -d "CUPS経由でプリンタへ送りました" https://ntfy.sh/KxgaRAdAYycAOnTS
+    curl -H "Title: FAX印刷成功" \
+         -H "Tags: printer" \
+         -d "プリンタへデータを送信しました。" \
+         https://ntfy.sh/KxgaRAdAYycAOnTS
 else
-    curl -H "Title: FAX印刷失敗" -d "CUPSへの送信に失敗しました" https://ntfy.sh/KxgaRAdAYycAOnTS
+    curl -H "Title: FAX印刷エラー" \
+         -H "Priority: high" \
+         -H "Tags: warning" \
+         -d "CUPSへの印刷ジョブ投入に失敗しました。" \
+         https://ntfy.sh/KxgaRAdAYycAOnTS
 fi
 
+# 一時ファイルの削除
 rm -f "$PDFFILE"
