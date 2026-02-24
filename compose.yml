@@ -16,6 +16,8 @@ services:
         target: /etc/asterisk/pjsip.conf
       - source: asterisk_extensions
         target: /etc/asterisk/extensions.conf
+      - source: asterisk_modules
+        target: /etc/asterisk/modules.conf
       - source: asterisk_rtp
         target: /etc/asterisk/rtp.conf
 networks:
@@ -28,5 +30,7 @@ configs:
     file: ./config/pjsip.conf
   asterisk_extensions:
     file: ./config/extensions.conf
+  asterisk_modules:
+    file: ./config/modules.conf
   asterisk_rtp:
     file: ./config/rtp.conf
