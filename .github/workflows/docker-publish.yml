@@ -1,15 +1,14 @@
 name: Build and Push Docker Image to GHCR
 
-# どのタイミングで自動ビルドを走らせるかの設定
 on:
+  # 1. GitHubの画面上から手動でビルドを実行できるようにする
+  workflow_dispatch:
+  
+  # 2. "v" から始まるタグ（例: v1.0, v2.1.3）をプッシュした時だけ自動実行する
+  # （通常のコミットではビルドされなくなります）
   push:
-    branches: [ "main", "master" ]
-    # 設定ファイルやスクリプトが変更された時だけビルドする
-    paths:
-      - 'Dockerfile'
-      - 'config/**'
-      - 'script/**'
-      - '.github/workflows/**'
+    tags:
+      - 'v*'
 
 env:
   REGISTRY: ghcr.io
@@ -19,7 +18,6 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     
-    # GITHUB_TOKEN に GHCR へ書き込む(push)権限を付与
     permissions:
       contents: read
       packages: write
@@ -28,6 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # キャッシュ機能を使うために必要なBuildxのセットアップ
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -36,7 +35,6 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          # 自分で発行したPATではなく、Actionsが自動生成する一時トークンを使います
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
@@ -45,14 +43,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short
+            type=raw,value=latest
+            type=ref,event=tag
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          # Dockerfile があるディレクトリをルート階層(".")に変更
           context: .
           push: true
-          # プッシュするイメージ名とタグ
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          # ===== ここがキャッシュによる超高速化の要 =====
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
