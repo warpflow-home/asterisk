@@ -2,8 +2,8 @@ FROM andrius/asterisk:latest
 
 USER root
 
-# libvorbis と curl をインストール
-RUN apt-get update && apt-get install -y libvorbisenc2 curl && rm -rf /var/lib/apt/lists/*
+# libvorbis, curl, およびルート証明書(ca-certificates)をインストール
+RUN apt-get update && apt-get install -y libvorbisenc2 curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # CDRディレクトリの作成、権限設定、不要なusers.confの削除
 RUN mkdir -p /var/log/asterisk/cdr-csv && \
