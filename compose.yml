@@ -16,9 +16,14 @@ services:
     networks:
       - hostnet
     environment:
-      - ADMIN_PASSWORD=admin  # CUPSのWeb UIログイン用パスワード
-    volumes:
-      - cups-config:/etc/cups
+      - ADMIN_PASSWORD=admin
+    # コンテナ起動時にプリンタを自動登録するスクリプトを実行
+    entrypoint: /bin/bash -c "
+      /usr/sbin/cupsd && 
+      sleep 5 && 
+      lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere && 
+      lpadmin -d Canon_G3060 &&
+      tail -f /var/log/cups/error_log"
     deploy:
       replicas: 1
       placement:
@@ -28,6 +33,3 @@ networks:
   hostnet:
     name: host
     external: true
-
-volumes:
-  cups-config:
