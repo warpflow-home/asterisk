@@ -11,7 +11,6 @@ MESSAGE="FAXを受信しました (${DATETIME}) ファイル名: ${FILENAME}"
 # ntfy.sh へ通知を送信 (すでに on_call.sh でお使いのトピックへ通知します)
 curl -H "Title: FAX受信完了" \
      -H "Priority: high" \
-     -H "Tags: fax,page_facing_up" \
      -d "${MESSAGE}" \
      https://ntfy.sh/KxgaRAdAYycAOnTS
 
