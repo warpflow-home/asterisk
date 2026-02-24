@@ -10,7 +10,24 @@ services:
       placement:
         constraints: [node.hostname == node01]
 
+  # ===== 以下を追加 =====
+  cups:
+    image: ydkn/cups:latest
+    networks:
+      - hostnet
+    environment:
+      - ADMIN_PASSWORD=admin  # CUPSのWeb UIログイン用パスワード
+    volumes:
+      - cups-config:/etc/cups
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == node01]
+
 networks:
   hostnet:
     name: host
     external: true
+
+volumes:
+  cups-config:
