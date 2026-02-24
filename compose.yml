@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   asterisk:
-    image: andrius/asterisk:latest
+    image: ghcr.io/jarodbruce/asterisk-homelab:latest
     healthcheck:
       disable: true
     networks:
@@ -11,26 +11,8 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == node01]
-    configs:
-      - source: asterisk_pjsip
-        target: /etc/asterisk/pjsip.conf
-      - source: asterisk_extensions
-        target: /etc/asterisk/extensions.conf
-      - source: asterisk_modules
-        target: /etc/asterisk/modules.conf
-      - source: asterisk_rtp
-        target: /etc/asterisk/rtp.conf
+
 networks:
   hostnet:
     name: host
     external: true
-
-configs:
-  asterisk_pjsip:
-    file: ./config/pjsip.conf
-  asterisk_extensions:
-    file: ./config/extensions.conf
-  asterisk_modules:
-    file: ./config/modules.conf
-  asterisk_rtp:
-    file: ./config/rtp.conf
