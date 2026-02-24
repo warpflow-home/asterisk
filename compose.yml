@@ -9,11 +9,22 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == node01]
-    volumes:
-      - ./config/pjsip.conf:/etc/asterisk/pjsip.conf:ro
-      - ./config/extensions.conf:/etc/asterisk/extensions.conf:ro
-      - ./config/rtp.conf:/etc/asterisk/rtp.conf:ro
+    configs:
+      - source: asterisk_pjsip
+        target: /etc/asterisk/pjsip.conf
+      - source: asterisk_extensions
+        target: /etc/asterisk/extensions.conf
+      - source: asterisk_rtp
+        target: /etc/asterisk/rtp.conf
 networks:
   hostnet:
     name: host
     external: true
+
+configs:
+  asterisk_pjsip:
+    file: ./config/pjsip.conf
+  asterisk_extensions:
+    file: ./config/extensions.conf
+  asterisk_rtp:
+    file: ./config/rtp.conf
