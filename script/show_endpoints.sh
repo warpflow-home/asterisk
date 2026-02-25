@@ -8,51 +8,27 @@ RAW_DATA=$(/usr/sbin/asterisk -rx "pjsip show endpoints")
 
 # awkで整形（より堅牢な書き方に変更）
 FORMATTED_INFO=$(echo "$RAW_DATA" | awk '
-BEGIN { FS=" "; ep_count=0 }
+BEGIN { FS=" "; prev_name=""; prev_ip=""; found=0 }
 
 /^Endpoint:/ {
-    ep_count++;
-    ep_name[ep_count] = $2;
-    sub(/^Endpoint: [^ ]+ /, "", $0);
-    sub(/ 0 of inf.*/, "", $0);
-    ep_stat[ep_count] = $0;
+    if (prev_name!="") {
+        printf "%s: %s\n", prev_name, (prev_ip?prev_ip:"-")
+        found=1
+    }
+    prev_name=$2; prev_ip=""; next
 }
 
 /^Contact:/ {
-    # Contact の2番目に @ が含まれる場合はそこからIPを取る
-    if ($2 ~ /@/) {
-        match($2, /@[^:;]+/);
-        ep_ip[ep_count] = substr($2, RSTART+1, RLENGTH-1);
-    } else if ($2 ~ /^[0-9]+\./) {
-        # 直接IPが来る場合
-        ep_ip[ep_count] = $2;
-    }
-    # RTT 抽出 (Avail の直後の数値)
-    if ($0 ~ /Avail/) {
-        for(i=1; i<=NF; i++) if ($i ~ /^[0-9]+\.[0-9]+$/) ep_rtt[ep_count] = $i "ms";
-    }
+    if ($2 ~ /@/) { match($2, /@[^:;]+/); prev_ip=substr($2, RSTART+1, RLENGTH-1) }
+    else if ($2 ~ /^[0-9]/) prev_ip=$2
+    next
 }
 
-/^Match:/ {
-    split($2, m, "/");
-    ep_ip[ep_count] = m[1];
-}
+/^Match:/ { split($2,m,"/"); prev_ip=m[1]; next }
 
 END {
-    for (i=1; i<=ep_count; i++) {
-        # 短い状態名に変換
-        status = ""
-        if (ep_stat[i] ~ /Unavailable/) status = "断線"
-        else if (ep_stat[i] ~ /Not in use/) status = "待機"
-        else status = "使用中"
-
-        ip = (ep_ip[i] ? ep_ip[i] : "-")
-        rtt = (ep_rtt[i] ? "(" ep_rtt[i] ")" : "")
-        # シンプルな1行出力: 名前: 状態 — IP (RTT)
-        printf "%s: %s — %s %s\n", ep_name[i], status, ip, rtt
-    }
-    # 合計行を出力
-    printf "合計: %d\n", ep_count
+    if (prev_name!="") { printf "%s: %s\n", prev_name, (prev_ip?prev_ip:"-"); found=1 }
+    # found フラグは不要だが残す（出力は空でも可）
 }')
 
 # もし整形結果が空なら、元のデータをそのまま入れる
