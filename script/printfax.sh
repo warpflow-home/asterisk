@@ -12,26 +12,26 @@ PDFFILE="${FAXFILE%.*}.pdf"
 # 1. ファイルの存在チェックと通知
 # =========================================================
 if [ ! -f "$FAXFILE" ]; then
-    # FAX受信失敗時（内線電話でのテストなど）
+    # FAX受信失敗時（内線電話の不在着信時など）
     curl -H "Title: FAX受信失敗" \
          -H "Priority: high" \
          -H "Tags: warning" \
-         -d "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。通信テストとしてダミーPDFを印刷します。" \
+         -d "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。" \
          https://ntfy.sh/KxgaRAdAYycAOnTS
     
-    # テスト用のダミーPDFをダウンロード
-    curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
-else
-    # 実際のFAX受信成功時
-    curl -H "Title: FAX受信完了" \
-         -H "Priority: default" \
-         -H "Tags: fax,page_facing_up" \
-         -d "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
-    
-    # TIFFをPDFに変換 (A4サイズ指定)
-    tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
+    # 印刷対象がないため、ここでスクリプトを終了
+    exit 1
 fi
+
+# 実際のFAX受信成功時
+curl -H "Title: FAX受信完了" \
+     -H "Priority: default" \
+     -H "Tags: fax,page_facing_up" \
+     -d "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}" \
+     https://ntfy.sh/KxgaRAdAYycAOnTS
+
+# TIFFをPDFに変換 (A4サイズ指定)
+tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
 
 # =========================================================
 # 2. CUPS経由で印刷実行
