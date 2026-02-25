@@ -10,14 +10,14 @@ services:
     deploy:
       replicas: 1
 
-  # ===== 以下を追加 =====
+  # ===== FAX印刷用CUPSサービスの追加 =====
   cups:
     image: ydkn/cups:latest
     networks:
       - hostnet
     environment:
       - ADMIN_PASSWORD=admin
-    # コンテナ起動時にプリンタを自動登録するスクリプトを実行
+    # コンテナ起動時にプリンタ(Canon_G3060)を自動登録するスクリプトを実行
     entrypoint: /bin/bash -c "
       /usr/sbin/cupsd && 
       sleep 5 && 
