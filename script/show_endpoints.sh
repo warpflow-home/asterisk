@@ -6,37 +6,36 @@ DATETIME=$(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S')
 # Asteriskの情報を取得
 RAW_DATA=$(/usr/sbin/asterisk -rx "pjsip show endpoints")
 
-# awkで整形（より堅牢な書き方に変更）
+# awkで簡潔に整形（エンドポイント、ステータス、IP のみ）
 FORMATTED_INFO=$(echo "$RAW_DATA" | awk '
-BEGIN { FS=" "; prev_name=""; prev_ip=""; found=0 }
+BEGIN { endpoint=""; status="" }
 
 /^Endpoint:/ {
-    if (prev_name!="") {
-        printf "%s: %s\n", prev_name, (prev_ip?prev_ip:"-")
-        found=1
+    if (endpoint!="") printf "%s (%s)\n", endpoint, status
+    endpoint=$2
+    status=""
+    for (i=3; i<=NF; i++) {
+        if ($i ~ /^(in use|Not in use|Unavailable)/) {
+            status=$i; break
+        }
     }
-    prev_name=$2; prev_ip=""; next
-}
-
-/^Contact:/ {
-    if ($2 ~ /@/) { match($2, /@[^:;]+/); prev_ip=substr($2, RSTART+1, RLENGTH-1) }
-    else if ($2 ~ /^[0-9]/) prev_ip=$2
     next
 }
 
-/^Match:/ { split($2,m,"/"); prev_ip=m[1]; next }
+/^Contact:/ {
+    if ($2 ~ /@/) {
+        match($2, /@[^:;]+/)
+        ip=substr($2, RSTART+1, RLENGTH-1)
+        printf "%s (%s) - IP: %s\n", endpoint, status, ip
+        endpoint=""
+    }
+}
 
 END {
-    if (prev_name!="") { printf "%s: %s\n", prev_name, (prev_ip?prev_ip:"-"); found=1 }
-    # found フラグは不要だが残す（出力は空でも可）
+    if (endpoint!="") printf "%s (%s)\n", endpoint, status
 }')
 
-# もし整形結果が空なら、元のデータをそのまま入れる
-if [ -z "$FORMATTED_INFO" ]; then
-    CONTENT="解析エラーまたはデータなし:\n${RAW_DATA}"
-else
-    CONTENT="${FORMATTED_INFO}"
-fi
+CONTENT="${FORMATTED_INFO}"
 
 # ntfy.sh へ通知
 curl -H "Title: PJSIP 接続レポート" \
