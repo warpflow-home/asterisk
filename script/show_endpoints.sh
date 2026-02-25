@@ -4,67 +4,62 @@
 DATETIME=$(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S')
 
 # Asteriskの情報を取得
-RAW_DATA=$(asterisk -rx "pjsip show endpoints")
+RAW_DATA=$(/usr/sbin/asterisk -rx "pjsip show endpoints")
 
-# awkで整形
+# awkで整形（より堅牢な書き方に変更）
 FORMATTED_INFO=$(echo "$RAW_DATA" | awk '
-# 1レコード出力する関数
-function print_record() {
-    if (ep_name == "" || ep_name ~ /^</) return;
-    
-    # アイコンとステータス
-    icon = (ep_stat ~ /Unavailable/) ? "❌" : "✅";
-    gsub(/Not in use/, "待機", ep_stat);
-    gsub(/Unavailable/, "断線", ep_stat);
-    
-    # 表示
-    printf "・%s %-6s: %s [%s] %s\n", icon, ep_name, ep_stat, (ep_ip=="" ? "-" : ep_ip), (ep_rtt=="" ? "" : "("ep_rtt")");
+BEGIN { FS=" "; ep_count=0 }
+
+/^Endpoint:/ {
+    ep_count++;
+    ep_name[ep_count] = $2;
+    sub(/^Endpoint: [^ ]+ /, "", $0);
+    sub(/ 0 of inf.*/, "", $0);
+    ep_stat[ep_count] = $0;
 }
 
-# Endpoint行 (ヘッダー "<" で始まるものは除外)
-/^Endpoint: [^<]/ {
-    print_record(); # 前の行があれば出力
-    
-    ep_name = $2;
-    # ステータス抽出 (Endpoint名以降、"0 of inf"の前まで)
-    stat_part = $0;
-    sub(/^Endpoint: [^ ]+ /, "", stat_part);
-    sub(/ 0 of inf.*/, "", stat_part);
-    ep_stat = stat_part;
-    
-    # 初期化
-    ep_ip = ""; ep_rtt = "";
-}
-
-# Contact行からIPとRTTを抽出
-/^Contact: [^<]/ {
-    # IP抽出: @の後ろ、[:;]の前
+/^Contact:/ {
+    # Contact の2番目に @ が含まれる場合はそこからIPを取る
     if ($2 ~ /@/) {
-        split($2, a, "@");
-        split(a[2], b, /[:;]/);
-        ep_ip = b[1];
+        match($2, /@[^:;]+/);
+        ep_ip[ep_count] = substr($2, RSTART+1, RLENGTH-1);
+    } else if ($2 ~ /^[0-9]+\./) {
+        # 直接IPが来る場合
+        ep_ip[ep_count] = $2;
     }
-    # RTT抽出: Availのあとの数値
+    # RTT 抽出 (Avail の直後の数値)
     if ($0 ~ /Avail/) {
-        ep_rtt = $NF "ms";
+        for(i=1; i<=NF; i++) if ($i ~ /^[0-9]+\.[0-9]+$/) ep_rtt[ep_count] = $i "ms";
     }
 }
 
-# Match行からIPを抽出
-/^Match: [^<]/ {
+/^Match:/ {
     split($2, m, "/");
-    ep_ip = m[1];
+    ep_ip[ep_count] = m[1];
 }
 
-# 最後に残ったレコードを出力
-END { print_record(); }
-')
+END {
+    for (i=1; i<=ep_count; i++) {
+        # 短い状態名に変換
+        status = ""
+        if (ep_stat[i] ~ /Unavailable/) status = "断線"
+        else if (ep_stat[i] ~ /Not in use/) status = "待機"
+        else status = "使用中"
 
-# 通知内容の構築
+        ip = (ep_ip[i] ? ep_ip[i] : "-")
+        rtt = (ep_rtt[i] ? "(" ep_rtt[i] ")" : "")
+        # シンプルな1行出力: 名前: 状態 — IP (RTT)
+        printf "%s: %s — %s %s\n", ep_name[i], status, ip, rtt
+    }
+    # 合計行を出力
+    printf "合計: %d\n", ep_count
+}')
+
+# もし整形結果が空なら、元のデータをそのまま入れる
 if [ -z "$FORMATTED_INFO" ]; then
-    CONTENT="有効なエンドポイントデータが見つかりませんでした。"
+    CONTENT="解析エラーまたはデータなし:\n${RAW_DATA}"
 else
-    CONTENT="$FORMATTED_INFO"
+    CONTENT="${FORMATTED_INFO}"
 fi
 
 # ntfy.sh へ通知
