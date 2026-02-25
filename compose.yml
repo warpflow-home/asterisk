@@ -3,16 +3,18 @@ services:
     image: ghcr.io/jarodbruce/asterisk-homelab:latest
     healthcheck:
       disable: true
-    ports:
-      # SIPポートとRTP（音声）ポートをSwarm全体で待ち受ける
-      - "5060:5060/udp"
-      - "10000-10050:10000-10050/udp"
+    networks:
+      - hostnet
     deploy:
       replicas: 1
+      placement:
+        constraints: [node.hostname == node01]
 
   # ===== 以下を追加 =====
   cups:
     image: ydkn/cups:latest
+    networks:
+      - hostnet
     environment:
       - ADMIN_PASSWORD=admin
     # コンテナ起動時にプリンタを自動登録するスクリプトを実行
@@ -24,6 +26,8 @@ services:
       tail -f /var/log/cups/error_log"
     deploy:
       replicas: 1
+      placement:
+        constraints: [node.hostname == node01]
 
 networks:
   hostnet:
