@@ -1,35 +1,51 @@
 services:
+  # 実験用のTailscaleコンテナ
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: asterisk # Tailscale管理画面上の名前
+    network_mode: host 
+    environment:
+      - TS_AUTHKEY=tskey-auth-kimpwkK2Qq11CNTRL-Y3bEhhrKZJjFugzzcXvMJjtYowW3Wynf # ※ここで発行した認証キーを指定
+      - TS_STATE_DIR=/var/lib/tailscale
+    volumes:
+      - tailscale-data:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
   asterisk:
     image: ghcr.io/jarodbruce/asterisk-homelab:latest
     healthcheck:
       disable: true
     networks:
       - hostnet
+    # ▼ node01 固定の制約を削除（Swarmを利用しないなら deploy ブロックごと消してもOKです）
     deploy:
       replicas: 1
-      placement:
-        constraints: [node.hostname == node01]
 
-  # ===== 以下を追加 =====
   cups:
     image: ydkn/cups:latest
     networks:
       - hostnet
     environment:
       - ADMIN_PASSWORD=admin
-    # コンテナ起動時にプリンタを自動登録するスクリプトを実行
     entrypoint: /bin/bash -c "
       /usr/sbin/cupsd && 
       sleep 5 && 
       lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere && 
       lpadmin -d Canon_G3060 &&
       tail -f /var/log/cups/error_log"
+    # ▼ node01 固定の制約を削除
     deploy:
       replicas: 1
-      placement:
-        constraints: [node.hostname == node01]
 
 networks:
   hostnet:
     name: host
     external: true
+
+# Tailscaleの認証状態を保持するためのボリューム
+volumes:
+  tailscale-data:
