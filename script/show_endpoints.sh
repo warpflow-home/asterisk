@@ -4,63 +4,67 @@
 DATETIME=$(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S')
 
 # Asteriskの情報を取得
-RAW_DATA=$(/usr/sbin/asterisk -rx "pjsip show endpoints")
+RAW_DATA=$(asterisk -rx "pjsip show endpoints")
 
-# awkで整形（より堅牢な書き方に変更）
+# awkで整形
 FORMATTED_INFO=$(echo "$RAW_DATA" | awk '
-BEGIN { FS=" "; ep_count=0 }
-
-# "Endpoint:" で始まる行
-/^Endpoint:/ {
-    ep_count++;
-    ep_name[ep_count] = $2;
-    # ステータスを結合 (Not in use 対応)
-    sub(/^Endpoint: [^ ]+ /, "", $0);
-    sub(/ 0 of inf.*/, "", $0);
-    ep_stat[ep_count] = $0;
-}
-
-# "Contact:" で始まる行（IPとRTTを抽出）
-/^Contact:/ {
-    # IP抽出: @ の後ろから : か ; まで
-    match($2, /@[^:;]+/);
-    ep_ip[ep_count] = substr($2, RSTART+1, RLENGTH-1);
+# 1レコード出力する関数
+function print_record() {
+    if (ep_name == "" || ep_name ~ /^</) return;
     
-    # RTT抽出: Avail の後ろの数字
+    # アイコンとステータス
+    icon = (ep_stat ~ /Unavailable/) ? "❌" : "✅";
+    gsub(/Not in use/, "待機", ep_stat);
+    gsub(/Unavailable/, "断線", ep_stat);
+    
+    # 表示
+    printf "・%s %-6s: %s [%s] %s\n", icon, ep_name, ep_stat, (ep_ip=="" ? "-" : ep_ip), (ep_rtt=="" ? "" : "("ep_rtt")");
+}
+
+# Endpoint行 (ヘッダー "<" で始まるものは除外)
+/^Endpoint: [^<]/ {
+    print_record(); # 前の行があれば出力
+    
+    ep_name = $2;
+    # ステータス抽出 (Endpoint名以降、"0 of inf"の前まで)
+    stat_part = $0;
+    sub(/^Endpoint: [^ ]+ /, "", stat_part);
+    sub(/ 0 of inf.*/, "", stat_part);
+    ep_stat = stat_part;
+    
+    # 初期化
+    ep_ip = ""; ep_rtt = "";
+}
+
+# Contact行からIPとRTTを抽出
+/^Contact: [^<]/ {
+    # IP抽出: @の後ろ、[:;]の前
+    if ($2 ~ /@/) {
+        split($2, a, "@");
+        split(a[2], b, /[:;]/);
+        ep_ip = b[1];
+    }
+    # RTT抽出: Availのあとの数値
     if ($0 ~ /Avail/) {
-        for(i=1; i<=NF; i++) {
-            if ($i ~ /^[0-9]+\.[0-9]+$/) ep_rtt[ep_count] = $i "ms";
-        }
+        ep_rtt = $NF "ms";
     }
 }
 
-# "Match:" で始まる行（固定IP用）
-/^Match:/ {
+# Match行からIPを抽出
+/^Match: [^<]/ {
     split($2, m, "/");
-    ep_ip[ep_count] = m[1];
+    ep_ip = m[1];
 }
 
-END {
-    for (i=1; i<=ep_count; i++) {
-        # アイコン判定
-        icon = (ep_stat[i] ~ /Unavailable/) ? "❌" : "✅";
-        # 表示名整形
-        stat_name = ep_stat[i];
-        gsub(/Not in use/, "待機", stat_name);
-        gsub(/Unavailable/, "断線", stat_name);
-        
-        printf "・%s %-6s: %s [%s] %s\n", 
-               icon, ep_name[i], stat_name, 
-               (ep_ip[i] ? ep_ip[i] : "-"), 
-               (ep_rtt[i] ? "(" ep_rtt[i] ")" : "");
-    }
-}')
+# 最後に残ったレコードを出力
+END { print_record(); }
+')
 
-# もし整形結果が空なら、元のデータをそのまま入れる
+# 通知内容の構築
 if [ -z "$FORMATTED_INFO" ]; then
-    CONTENT="解析エラーまたはデータなし:\n${RAW_DATA}"
+    CONTENT="有効なエンドポイントデータが見つかりませんでした。"
 else
-    CONTENT="${FORMATTED_INFO}"
+    CONTENT="$FORMATTED_INFO"
 fi
 
 # ntfy.sh へ通知
