@@ -17,7 +17,7 @@ if [ ! -f "$FAXFILE" ]; then
          -H "Priority: high" \
          -H "Tags: warning" \
          -d "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
+         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
     
     # 印刷対象がないため、ここでスクリプトを終了
     exit 1
@@ -28,7 +28,7 @@ curl -H "Title: FAX受信完了" \
      -H "Priority: default" \
      -H "Tags: fax,page_facing_up" \
      -d "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}" \
-     https://ntfy.sh/KxgaRAdAYycAOnTS
+     https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 
 # TIFFをPDFに変換 (A4サイズ指定)
 tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
@@ -43,13 +43,13 @@ if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
          -H "Tags: printer" \
          -d "プリンタへデータを送信しました。" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
+         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 else
     curl -H "Title: FAX印刷エラー" \
          -H "Priority: high" \
          -H "Tags: warning" \
          -d "CUPSへの印刷ジョブ投入に失敗しました。" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
+         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 fi
 
 # 一時ファイルの削除

@@ -16,13 +16,13 @@ if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
          -H "Tags: printer" \
          -d "プリンタへデータを送信しました。" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
+         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 else
     curl -H "Title: FAX印刷エラー" \
          -H "Priority: high" \
          -H "Tags: warning" \
          -d "CUPSへの印刷ジョブ投入に失敗しました。" \
-         https://ntfy.sh/KxgaRAdAYycAOnTS
+         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 fi
 
 # 一時ファイルの削除

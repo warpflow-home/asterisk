@@ -45,4 +45,4 @@ curl -H "Title: PJSIP 接続レポート" \
      -d "取得日時: ${DATETIME}
 
 ${CONTENT}" \
-     https://ntfy.sh/KxgaRAdAYycAOnTS
+     https://ntfy.warpflow.net/xw53brZ6HsWlyP6A

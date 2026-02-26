@@ -1,17 +1,15 @@
 name: Build and Push Docker Image to GHCR
 
 on:
-  # main (または master) にPushされたら自動実行
   push:
     branches: [ "main", "master" ]
-    # 以下のファイル・フォルダに変更があった場合のみビルドする（無駄な実行を防止）
     paths:
       - 'Dockerfile'
       - 'config/**'
       - 'script/**'
+      - 'music/**'
       - '.github/workflows/**'
       
-  # GitHubの画面から手動で実行できるボタンも一応残しておきます
   workflow_dispatch:
 
 env:
@@ -30,7 +28,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # キャッシュ機能を使うために必要なBuildxのセットアップ
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -56,6 +53,5 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          # ===== ここが超高速化・節約の要 =====
           cache-from: type=gha
           cache-to: type=gha,mode=max
