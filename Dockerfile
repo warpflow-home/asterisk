@@ -1,32 +1,39 @@
 FROM andrius/asterisk:latest
 USER root
 
-# 必要なパッケージのインストール
-# asterisk-core-sounds-en-ulaw などを追加
+# パッケージのインストール（aptからasterisk音声パッケージを削除し、tarを追加）
 RUN apt-get update && apt-get install -y \
     libvorbisenc2 \
     curl \
     ca-certificates \
     libtiff-tools \
     cups-client \
-    asterisk-core-sounds-en-ulaw \
-    asterisk-moh-opsound-wav \
+    tar \
     && rm -rf /var/lib/apt/lists/*
 
 # ディレクトリの作成
 RUN mkdir -p /var/log/asterisk/cdr-csv && \
     mkdir -p /var/lib/asterisk/moh && \
+    mkdir -p /var/lib/asterisk/sounds/en && \
     mkdir -p /var/lib/asterisk/sounds/ja && \
     chown -R asterisk:asterisk /var/log/asterisk && \
     chmod -R 755 /var/log/asterisk && \
     rm -f /etc/asterisk/users.conf
+
+# ===== 公式からCore Sounds (英語ガイダンス) をダウンロードして展開 =====
+RUN curl -L -o /tmp/asterisk-core-sounds-en-ulaw-current.tar.gz https://downloads.asterisk.org/pub/telephony/sounds/asterisk-core-sounds-en-ulaw-current.tar.gz && \
+    tar -xzf /tmp/asterisk-core-sounds-en-ulaw-current.tar.gz -C /var/lib/asterisk/sounds/en && \
+    rm /tmp/asterisk-core-sounds-en-ulaw-current.tar.gz && \
+    chown -R asterisk:asterisk /var/lib/asterisk/sounds && \
+    chmod -R 755 /var/lib/asterisk/sounds
 
 # ===== スクリプトのコピー =====
 COPY ./script /var/lib/asterisk/scripts
 RUN chown -R asterisk:asterisk /var/lib/asterisk/scripts && \
     chmod -R 755 /var/lib/asterisk/scripts
 
-# ===== 保留音ファイルのコピー =====
+# ===== 保留音ファイルのコピー (ローカルの music フォルダ) =====
+# ユーザーが用意した保留音を使うため、公式のデフォルトMOHはダウンロードしません
 COPY ./music /var/lib/asterisk/moh
 RUN chown -R asterisk:asterisk /var/lib/asterisk/moh && \
     chmod -R 755 /var/lib/asterisk/moh
