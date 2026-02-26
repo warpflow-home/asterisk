@@ -4,15 +4,14 @@ services:
     healthcheck:
       disable: true
     networks:
-      macvlan_net:
-        ipv4_address: 192.168.1.200  # Asteriskはmacvlanの固定IP
+      - asterisk_macvlan_net
     deploy:
       replicas: 1
 
   cups:
     image: ydkn/cups:latest
     networks:
-      - hostnet  # ホストネットワークを使用
+      - hostnet
     environment:
       - ADMIN_PASSWORD=admin
     entrypoint: /bin/bash -c "
@@ -22,17 +21,12 @@ services:
       lpadmin -d Canon_G3060 &&
       tail -f /var/log/cups/error_log"
     deploy:
-      mode: global  # 全ノードに配置（KeepalivedのVIPがどこにあっても応答可能に）
+      mode: global
 
 networks:
-  macvlan_net:
-    driver: macvlan
-    driver_opts:
-      parent: enp1s0  # ※実際のNIC名
-    ipam:
-      config:
-        - subnet: 192.168.1.0/24
-        - ip_range: 192.168.1.200/32
-  hostnet:           # ★これがないとエラーになるので追加
+  asterisk_macvlan_net:
+    external: true
+    name: asterisk_macvlan_net  # 先ほどコマンドで作成したネットワーク名
+  hostnet:
     name: host
     external: true
