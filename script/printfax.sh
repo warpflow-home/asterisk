@@ -37,7 +37,7 @@ tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
 # 2. CUPS経由で印刷実行
 # =========================================================
 # -h localhost:631 は hostnet 環境でのCUPSコンテナ宛て
-lp -h localhost:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+lp -h 192.168.1.240:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
