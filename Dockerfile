@@ -1,23 +1,27 @@
 FROM andrius/asterisk:latest
 USER root
 
+# 必要なパッケージのインストール
+# asterisk-core-sounds-en-ulaw などを追加
 RUN apt-get update && apt-get install -y \
     libvorbisenc2 \
     curl \
     ca-certificates \
     libtiff-tools \
     cups-client \
+    asterisk-core-sounds-en-ulaw \
+    asterisk-moh-opsound-wav \
     && rm -rf /var/lib/apt/lists/*
 
-# CDRディレクトリの作成、権限設定、不要なusers.confの削除
-# 保留音用ディレクトリ (/var/lib/asterisk/moh) も作成
+# ディレクトリの作成
 RUN mkdir -p /var/log/asterisk/cdr-csv && \
     mkdir -p /var/lib/asterisk/moh && \
+    mkdir -p /var/lib/asterisk/sounds/ja && \
     chown -R asterisk:asterisk /var/log/asterisk && \
     chmod -R 755 /var/log/asterisk && \
     rm -f /etc/asterisk/users.conf
 
-# ===== スクリプトのコピーと権限設定 =====
+# ===== スクリプトのコピー =====
 COPY ./script /var/lib/asterisk/scripts
 RUN chown -R asterisk:asterisk /var/lib/asterisk/scripts && \
     chmod -R 755 /var/lib/asterisk/scripts
@@ -27,7 +31,7 @@ COPY ./music /var/lib/asterisk/moh
 RUN chown -R asterisk:asterisk /var/lib/asterisk/moh && \
     chmod -R 755 /var/lib/asterisk/moh
 
-# ===== 設定ファイルのコピーと権限設定 =====
+# ===== 設定ファイルのコピー =====
 COPY ./config/pjsip.conf /etc/asterisk/pjsip.conf
 COPY ./config/extensions.conf /etc/asterisk/extensions.conf
 COPY ./config/modules.conf /etc/asterisk/modules.conf
