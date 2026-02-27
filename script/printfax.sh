@@ -31,7 +31,7 @@ curl -H "Title: FAX受信完了" \
      https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
 
 # TIFFをPDFに変換 (A4サイズ指定)
-tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
+tiff2pdf -o "$PDFFILE" "$FAXFILE"
 
 # =========================================================
 # Nextcloud (MinIO母艦) へPDFを保存
