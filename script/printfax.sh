@@ -34,6 +34,18 @@ curl -H "Title: FAX受信完了" \
 tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
 
 # =========================================================
+# Nextcloud (MinIO母艦) へPDFを保存
+# =========================================================
+NC_URL="https://nextcloud.warpflow.net"
+NC_USER="warpflow@icloud.com"
+NC_PASS="AFyTr-R78CY-dd4jJ-zgcps-mP7Mi"
+
+# WebDAV経由でアップロード
+curl -s -u "${NC_USER}:${NC_PASS}" \
+     -T "$PDFFILE" \
+     "${NC_URL}/remote.php/dav/files/${NC_USER}/FAX/${FILENAME}.pdf"
+
+# =========================================================
 # 2. CUPS経由で印刷実行
 # =========================================================
 # -h localhost:631 は hostnet 環境でのCUPSコンテナ宛て
