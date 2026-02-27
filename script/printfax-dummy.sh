@@ -9,7 +9,7 @@ DATETIME=$(date '+%Y-%m-%d %H:%M:%S')
 PDFFILE="${FAXFILE%.*}.pdf"
 
 curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
-tiff2pdf -o "$PDFFILE" -p A4 -F "$FAXFILE"
+tiff2pdf -o "$PDFFILE" "$FAXFILE"
 lp -h 192.168.1.240:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
