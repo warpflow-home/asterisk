@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: jarodbruce/asterisk-homelab
+  IMAGE_NAME: warpflow-home/asterisk
 
 jobs:
   build-and-push:
