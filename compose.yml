@@ -1,6 +1,6 @@
 services:
   asterisk:
-    image: ghcr.io/jarodbruce/asterisk-homelab:latest
+    image: ghcr.io/warpflow-home/asterisk:latest
     healthcheck:
       disable: true
     networks:
