@@ -13,10 +13,8 @@ services:
       - /var/log/asterisk
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
-
     networks:
-          - swarm-macvlan
-
+      - swarm-macvlan
     deploy:
       mode: replicated
       replicas: 1
@@ -27,11 +25,10 @@ services:
         delay: 30s
         max_attempts: 3
         window: 120s
-
     healthcheck:
       disable: true
 
-cups:
+  cups:
     image: ydkn/cups:latest
     networks:
       - swarm-overlay
@@ -42,7 +39,7 @@ cups:
         mode: ingress
     environment:
       - ADMIN_PASSWORD=admin
-    # entrypoint を確実に登録されるように修正
+    # CUPS起動を待機してから確実に登録する処理
     entrypoint: >
       /bin/bash -c "
       /usr/sbin/cupsd && 
