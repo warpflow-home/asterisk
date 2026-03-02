@@ -30,7 +30,12 @@ services:
   cups:
     image: ydkn/cups:latest
     networks:
-      - hostnet
+      - swarm-overlay
+    ports:
+      - target: 631
+        published: 631
+        protocol: tcp
+        mode: ingress
     environment:
       - ADMIN_PASSWORD=admin
     entrypoint: /bin/bash -c "
@@ -46,3 +51,6 @@ networks:
   swarm-macvlan:
     external: true
     name: swarm-macvlan
+  swarm-overlay:
+    external: true
+    name: swarm-overlay
