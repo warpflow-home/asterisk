@@ -8,7 +8,7 @@ PDFFILE="/tmp/dummy_fax_$$.pdf"
 curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
 
 # ダウンロードしたPDFをそのまま印刷 (tiff2pdfの処理は不要なため削除)
-lp -h 192.168.1.240:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+CUPS_SERVER="192.168.1.240:631" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
