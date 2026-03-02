@@ -615,9 +615,9 @@ sudo mkdir -p /mnt/gluster/asterisk/{var/lib/asterisk,var/log/asterisk,var/spool
 3. **Build method** で「**Repository**」を選択。
 4. 以下の情報を入力：
    * **Name**: `asterisk`
-   * **Repository URL**: `https://github.com/warpflow/asterisk.git` (ご自身のフォークがあればそちらに変更)
+   * **Repository URL**: `https://github.com/warpflow-home/asterisk.git` (ご自身のフォークがあればそちらに変更)
    * **Repository reference**: `refs/heads/main`
-   * **Compose path**: `stacks/asterisk/asterisk-stack.yml`
+   * **Compose path**: `compose.yml`
 5. 「**Deploy the stack**」をクリック。
 
 > ⚠️ Asterisk設定ファイル内の `bindaddr` と `externip` (または `externaddr`) は必ず `192.168.1.200` を指定してください。
