@@ -39,14 +39,16 @@ services:
         mode: ingress
     environment:
       - ADMIN_PASSWORD=admin
-    # CUPS起動を待機してから確実に登録する処理
+    # プリンタの「共有」設定を追加
     entrypoint: >
       /bin/bash -c "
       /usr/sbin/cupsd && 
       echo 'Waiting for CUPS to start...' &&
       while ! lpstat -r >/dev/null 2>&1; do sleep 2; done &&
-      echo 'CUPS is ready! Registering printer...' &&
-      lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere && 
+      echo 'CUPS is ready! Configuring server...' &&
+      cupsctl --remote-any --share-printers &&
+      echo 'Registering printer...' &&
+      lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere -o printer-is-shared=true && 
       lpadmin -d Canon_G3060 &&
       echo 'Printer registered successfully!' &&
       tail -f /var/log/cups/error_log
