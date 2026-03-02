@@ -19,9 +19,17 @@ services:
 
     deploy:
       mode: replicated
-      replicas: 1                       # SIP/RTPのポート競合を避けるため1台のみ
+      replicas: 1
       update_config:
-        order: stop-first               # 再起動時のIP競合防止
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+        window: 120s
+        
+    healthcheck:
+      disable: true
 
   cups:
     image: ydkn/cups:latest
