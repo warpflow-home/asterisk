@@ -49,7 +49,7 @@ curl -s -u "${NC_USER}:${NC_PASS}" \
 # 2. CUPS経由で印刷実行
 # =========================================================
 # -h localhost:631 は hostnet 環境でのCUPSコンテナ宛て
-lp -h 192.168.1.240:631 -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
