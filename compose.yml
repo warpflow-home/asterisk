@@ -8,11 +8,11 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_NICE
-    volumes:
-      - asterisk_data:/var/lib/asterisk
-      - asterisk_logs:/var/log/asterisk
-      - asterisk_spool:/var/spool/asterisk
-      - asterisk_cdr:/var/log/asterisk/cdr-csv
+    tmpfs:
+      - /var/lib/asterisk
+      - /var/log/asterisk
+      - /var/spool/asterisk
+      - /var/log/asterisk/cdr-csv
 
     networks:
       swarm-macvlan:
@@ -46,9 +46,3 @@ networks:
   swarm-macvlan:
     external: true
     name: swarm-macvlan
-
-volumes:
-  asterisk_data:
-  asterisk_logs:
-  asterisk_spool:
-  asterisk_cdr:
