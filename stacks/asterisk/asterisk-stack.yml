@@ -36,7 +36,6 @@ services:
 networks:
   swarm-macvlan:
     external: true
-    name: swarm-macvlan
 
 volumes:
   asterisk_data:
