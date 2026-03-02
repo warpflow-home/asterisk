@@ -27,11 +27,11 @@ services:
         delay: 30s
         max_attempts: 3
         window: 120s
-        
+
     healthcheck:
       disable: true
 
-  cups:
+cups:
     image: ydkn/cups:latest
     networks:
       - swarm-overlay
@@ -42,12 +42,18 @@ services:
         mode: ingress
     environment:
       - ADMIN_PASSWORD=admin
-    entrypoint: /bin/bash -c "
+    # entrypoint を確実に登録されるように修正
+    entrypoint: >
+      /bin/bash -c "
       /usr/sbin/cupsd && 
-      sleep 5 && 
+      echo 'Waiting for CUPS to start...' &&
+      while ! lpstat -r >/dev/null 2>&1; do sleep 2; done &&
+      echo 'CUPS is ready! Registering printer...' &&
       lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere && 
       lpadmin -d Canon_G3060 &&
-      tail -f /var/log/cups/error_log"
+      echo 'Printer registered successfully!' &&
+      tail -f /var/log/cups/error_log
+      "
     deploy:
       mode: global
 
