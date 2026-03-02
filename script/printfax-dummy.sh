@@ -7,7 +7,11 @@ PDFFILE="/tmp/dummy_fax_$$.pdf"
 # ダミーのPDFをインターネットからダウンロード
 curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
 
-# ダウンロードしたPDFをそのまま印刷 (tiff2pdfの処理は不要なため削除)
+# CUPSサーバーのIPと、ジョブの実行ユーザーを明示的に指定
+export CUPS_SERVER="192.168.1.240"
+export CUPS_USER="root"
+
+# lpコマンド本体 (-h オプションは外し、プリンタ名だけを指定)
 lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
