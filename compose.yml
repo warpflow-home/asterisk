@@ -15,6 +15,7 @@ services:
       - /var/log/asterisk/cdr-csv
     networks:
       - swarm-macvlan
+      - swarm-overlay
     deploy:
       mode: replicated
       replicas: 1
