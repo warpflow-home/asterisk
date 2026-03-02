@@ -62,4 +62,7 @@ RUN chown asterisk:asterisk /etc/asterisk/pjsip.conf \
     /etc/asterisk/musiconhold.conf \
     /etc/asterisk/asterisk.conf
 
+# ===== CUPSクライアントのデフォルトサーバーを固定 =====
+RUN mkdir -p /etc/cups && echo "ServerName 192.168.1.240" > /etc/cups/client.conf
+
 USER asterisk
