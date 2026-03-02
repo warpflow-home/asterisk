@@ -1,12 +1,31 @@
+version: "3.9"
+
 services:
   asterisk:
+    # 既存のカスタムビルドイメージを使用します
     image: ghcr.io/warpflow-home/asterisk:latest
-    healthcheck:
-      disable: true
+    hostname: asterisk
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    volumes:
+      - asterisk_data:/var/lib/asterisk
+      - asterisk_logs:/var/log/asterisk
+      - asterisk_spool:/var/spool/asterisk
+      - asterisk_cdr:/var/log/asterisk/cdr-csv
+
     networks:
-      - asterisk_macvlan_net
+      swarm-macvlan:
+        ipv4_address: 192.168.1.200     # 固定IPをLANに直接割り当て
+
     deploy:
-      replicas: 1
+      mode: replicated
+      replicas: 1                       # SIP/RTPのポート競合を避けるため1台のみ
+      update_config:
+        order: stop-first               # 再起動時のIP競合防止
+      placement:
+        constraints:
+          - node.role == manager        # (必要に応じて設定)
 
   cups:
     image: ydkn/cups:latest
@@ -24,9 +43,32 @@ services:
       mode: global
 
 networks:
-  asterisk_macvlan_net:
+  swarm-macvlan:
     external: true
-    name: asterisk_macvlan_net  # 先ほどコマンドで作成したネットワーク名
-  hostnet:
-    name: host
-    external: true
+    name: swarm-macvlan
+
+volumes:
+  asterisk_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/gluster/asterisk/var/lib/asterisk
+  asterisk_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/gluster/asterisk/var/log/asterisk
+  asterisk_spool:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/gluster/asterisk/var/spool/asterisk
+  asterisk_cdr:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/gluster/asterisk/var/log/asterisk/cdr-csv
