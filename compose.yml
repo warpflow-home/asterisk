@@ -49,26 +49,6 @@ networks:
 
 volumes:
   asterisk_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /mnt/gluster/asterisk/var/lib/asterisk
   asterisk_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /mnt/gluster/asterisk/var/log/asterisk
   asterisk_spool:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /mnt/gluster/asterisk/var/spool/asterisk
   asterisk_cdr:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /mnt/gluster/asterisk/var/log/asterisk/cdr-csv
