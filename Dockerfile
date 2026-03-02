@@ -45,18 +45,21 @@ COPY ./config/modules.conf /etc/asterisk/modules.conf
 COPY ./config/rtp.conf /etc/asterisk/rtp.conf
 COPY ./config/features.conf /etc/asterisk/features.conf
 COPY ./config/musiconhold.conf /etc/asterisk/musiconhold.conf
+COPY ./config/asterisk.conf /etc/asterisk/asterisk.conf
 
 RUN chown asterisk:asterisk /etc/asterisk/pjsip.conf \
-                            /etc/asterisk/extensions.conf \
-                            /etc/asterisk/modules.conf \
-                            /etc/asterisk/rtp.conf \
-                            /etc/asterisk/features.conf \
-                            /etc/asterisk/musiconhold.conf && \
+    /etc/asterisk/extensions.conf \
+    /etc/asterisk/modules.conf \
+    /etc/asterisk/rtp.conf \
+    /etc/asterisk/features.conf \
+    /etc/asterisk/musiconhold.conf \
+    /etc/asterisk/asterisk.conf && \
     chmod 644 /etc/asterisk/pjsip.conf \
-              /etc/asterisk/extensions.conf \
-              /etc/asterisk/modules.conf \
-              /etc/asterisk/rtp.conf \
-              /etc/asterisk/features.conf \
-              /etc/asterisk/musiconhold.conf
+    /etc/asterisk/extensions.conf \
+    /etc/asterisk/modules.conf \
+    /etc/asterisk/rtp.conf \
+    /etc/asterisk/features.conf \
+    /etc/asterisk/musiconhold.conf \
+    /etc/asterisk/asterisk.conf
 
 USER asterisk
