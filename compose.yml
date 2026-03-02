@@ -15,17 +15,13 @@ services:
       - /var/log/asterisk/cdr-csv
 
     networks:
-      swarm-macvlan:
-        ipv4_address: 192.168.1.200     # 固定IPをLANに直接割り当て
+          - swarm-macvlan
 
     deploy:
       mode: replicated
       replicas: 1                       # SIP/RTPのポート競合を避けるため1台のみ
       update_config:
         order: stop-first               # 再起動時のIP競合防止
-      placement:
-        constraints:
-          - node.role == manager        # (必要に応じて設定)
 
   cups:
     image: ydkn/cups:latest
