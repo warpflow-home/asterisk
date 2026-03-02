@@ -8,11 +8,7 @@ PDFFILE="/tmp/dummy_fax_$$.pdf"
 curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
 
 # CUPSサーバーのIPと、ジョブの実行ユーザーを明示的に指定
-export CUPS_SERVER="192.168.1.240"
-export CUPS_USER="root"
-
-# lpコマンド本体 (-h オプションは外し、プリンタ名だけを指定)
-lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     curl -H "Title: FAX印刷成功" \
