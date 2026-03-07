@@ -8,60 +8,58 @@ FILENAME=$(basename "$FAXFILE")
 DATETIME=$(date '+%Y-%m-%d %H:%M:%S')
 PDFFILE="${FAXFILE%.*}.pdf"
 
+# 通知用の補助関数 (NTFY_URLが設定されている場合のみ実行)
+send_ntfy() {
+    local title=$1
+    local priority=${2:-default}
+    local tags=$3
+    local message=$4
+
+    if [ -n "$NTFY_URL" ]; then
+        curl -s -H "Title: ${title}" \
+             -H "Priority: ${priority}" \
+             -H "Tags: ${tags}" \
+             -d "${message}" \
+             "${NTFY_URL}" > /dev/null
+    fi
+}
+
 # =========================================================
 # 1. ファイルの存在チェックと通知
 # =========================================================
 if [ ! -f "$FAXFILE" ]; then
-    # FAX受信失敗時（内線電話の不在着信時など）
-    curl -H "Title: FAX受信失敗" \
-         -H "Priority: high" \
-         -H "Tags: warning" \
-         -d "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。" \
-         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
-    
-    # 印刷対象がないため、ここでスクリプトを終了
+    send_ntfy "FAX受信失敗" "high" "warning" "画像データが生成されませんでした(ステータス: ${FAXSTATUS:-不明})。"
     exit 1
 fi
 
-# 実際のFAX受信成功時
-curl -H "Title: FAX受信完了" \
-     -H "Priority: default" \
-     -H "Tags: fax,page_facing_up" \
-     -d "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}" \
-     https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+send_ntfy "FAX受信完了" "default" "fax,page_facing_up" "FAXを受信しました。印刷を開始します。ファイル: ${FILENAME}"
 
-# TIFFをPDFに変換 (A4サイズ指定)
+# TIFFをPDFに変換 (DPI情報を維持して変換)
 tiff2pdf -o "$PDFFILE" "$FAXFILE"
 
 # =========================================================
-# Nextcloud (MinIO母艦) へPDFを保存
+# 2. Nextcloud (WebDAV) へPDFを保存
 # =========================================================
-NC_URL="https://nextcloud.warpflow.net"
-NC_USER="warpflow@icloud.com"
-NC_PASS="AFyTr-R78CY-dd4jJ-zgcps-mP7Mi"
+# 必要な環境変数がすべて揃っている場合のみ実行
+if [ -n "$NC_URL" ] && [ -n "$NC_USER" ] && [ -n "$NC_APP_PASSWORD" ]; then
+    # URLの末尾のスラッシュを整理してパスを結合
+    BASE_URL="${NC_URL%/}"
+    WEBDAV_PATH="${BASE_URL}/remote.php/dav/files/${NC_USER}/FAX/${FILENAME}.pdf"
 
-# WebDAV経由でアップロード
-curl -s -u "${NC_USER}:${NC_PASS}" \
-     -T "$PDFFILE" \
-     "${NC_URL}/remote.php/dav/files/${NC_USER}/FAX/${FILENAME}.pdf"
+    curl -s -u "${NC_USER}:${NC_APP_PASSWORD}" -T "$PDFFILE" "${WEBDAV_PATH}"
+else
+    send_ntfy "FAX保存スキップ" "default" "information_source" "Nextcloudの設定が不足しているため、WebDAVへの保存をスキップしました。"
+fi
 
 # =========================================================
-# 2. CUPS経由で印刷実行
+# 3. CUPS経由で印刷実行
 # =========================================================
-# -h localhost:631 は hostnet 環境でのCUPSコンテナ宛て
 CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
-    curl -H "Title: FAX印刷成功" \
-         -H "Tags: printer" \
-         -d "プリンタへデータを送信しました。" \
-         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+    send_ntfy "FAX印刷成功" "default" "printer" "プリンタへデータを送信しました。"
 else
-    curl -H "Title: FAX印刷エラー" \
-         -H "Priority: high" \
-         -H "Tags: warning" \
-         -d "CUPSへの印刷ジョブ投入に失敗しました。" \
-         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+    send_ntfy "FAX印刷エラー" "high" "warning" "CUPSへの印刷ジョブ投入に失敗しました。"
 fi
 
 # 一時ファイルの削除

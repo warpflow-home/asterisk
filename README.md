@@ -1,50 +1,40 @@
-# asterisk-homelab
-A home lab setup for Asterisk VoIP system experimentation and testing. This project demonstrates PBX configuration, call routing, and VoIP integration in a controlled environment.
+# Asterisk HomeLab on Docker Swarm HA
 
-## Features
-- Asterisk PBX configuration
-- SIP endpoint management
-- Call routing and IVR setup
-- Extension management
-- Voicemail system
+このリポジトリは、Docker Swarm の高可用性（HA）クラスター環境上で動作させることを前提とした、Asterisk PBX の実践的なホームラボ環境です。
 
-## Prerequisites
-- Linux server (Ubuntu/Debian recommended)
-- Asterisk 18+ installed
-- Basic networking knowledge
-- SIP client or softphone for testing
+Macvlan ネットワークを用いた物理LANへの直接接続（SIP/RTPの安定化）と、CUPSコンテナを用いたFAXの自動PDF化＆ネットワークプリント、さらに Nextcloud (WebDAV) への自動バックアップ機能を備えています。
 
-## Installation
-1. Clone this repository
-2. Review configuration files in `/etc/asterisk/`
-3. Customize extensions.conf for your setup
-4. Start Asterisk service
+## 🌟 主な機能
 
-## Configuration
-Edit the following files to customize your setup:
-- `extensions.conf` - Call routing rules
-- `sip.conf` - SIP peer definitions
-- `voicemail.conf` - Voicemail settings
+* **完全コンテナ化された Asterisk PBX**: カスタムビルドされた軽量イメージ上で動作します。
+* **Swarm Macvlan 対応**: NATを回避し、指定した固定IP（`192.168.1.200`）で物理LANに直接接続します。
+* **FAXの自動受信とPDF変換**: TIFF形式で受信したFAXを、DPI情報を維持したまま自動で正しい向きのA4 PDFに変換します。
+* **CUPS 連携プリント**: 受信したFAXデータを、同一ネットワーク上のプリンター（Canon G3060: `192.168.1.221`）へ自動印刷します。
+* **WebDAV 自動アップロード**: 変換されたPDFを、NextcloudのWebDAV API経由で指定フォルダへ自動的に保存します。
+* **ntfy.sh プッシュ通知**: 着信時やFAX受信・印刷・保存の成功/失敗時に、スマホへリアルタイム通知を送ります。
 
-## Deploying on Docker Swarm (HA Setup)
-This repository includes a configuration to deploy Asterisk in a Docker Swarm High Availability environment using macvlan for direct physical network connectivity.
+## 🏗️ アーキテクチャ
 
-### How to deploy via Portainer (GitHub integration)
-1. In Portainer, navigate to **Stacks** > **Add stack**.
-2. Select **Repository**.
-3. Set the Repository URL to your GitHub repo URL (e.g., `https://github.com/warpflow/asterisk.git`).
-4. Set the Repository reference (e.g., `refs/heads/main`).
-5. Set the Compose path to: `stacks/asterisk/asterisk-stack.yml`.
-6. Ensure your Swarm nodes have GlusterFS mounted to `/mnt/gluster/` for persistent volumes.
-7. The macvlan network `swarm-macvlan` must be configured in Swarm with `192.168.1.200` assigned.
-8. Click **Deploy the stack**.
+本スタックは以下のネットワーク構成を前提としています。
 
-### Important Network Configurations
-* **macvlan IP**: `192.168.1.200` is used for SIP/RTP traffic to ensure NAT does not interfere.
-* **pjsip.conf**: Ensure `local_net` includes your physical network and Swarm overlay network. Also ensure `bindaddr` and `externaddr` are set to `192.168.1.200`.
+1. **`swarm-macvlan`**: Asteriskコンテナが物理LANと同じIP帯（192.168.1.x）を取得し、SIP/RTP通信を行うためのネットワーク。
+2. **`swarm-overlay`**: AsteriskとCUPSコンテナが内部通信を行うためのSwarmオーバレイネットワーク。
 
-## Testing
-Use a SIP client (Zoiper, Linphone, etc.) to register extensions and test calls within the lab.
+| 変数名 | 説明 | 設定例 |
+|--------|------|--------|
+| NTFY_URL | ntfy.sh の通知先トピックURL | https://ntfy.example.com/mytopic |
+| NC_URL | NextcloudのベースURL | https://nextcloud.example.com |
+| NC_USER | Nextcloudのログインユーザー名 | my_user または user@example.com |
+| NC_APP_PASSWORD | Nextcloudで発行したアプリパスワード | abcde-12345-fghij-67890 |
 
-## License
-MIT
+```text
+[物理LAN: 192.168.1.0/24]
+       │
+       ├─ (Macvlan) ──▶ [ Asterisk Container ] (IP: 192.168.1.200)
+       │                        │
+       │                  (Overlay Net)
+       │                        ▼
+       ├─ (Ingress) ──▶ [ CUPS Container ] (Port: 631) ──▶ [ 物理プリンター: 192.168.1.221 ]
+       │
+       └─ (External) ─▶ [ Nextcloud (WebDAV) / ntfy.sh ]
+```

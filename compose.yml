@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   asterisk:
-    # 既存のカスタムビルドイメージを使用します
     image: ghcr.io/warpflow-home/asterisk:latest
     hostname: asterisk
     cap_add:
@@ -13,6 +12,11 @@ services:
       - /var/log/asterisk
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
+    environment:
+      - NTFY_URL=${NTFY_URL}
+      - NC_URL=${NC_URL}
+      - NC_USER=${NC_USER}
+      - NC_APP_PASSWORD=${NC_APP_PASSWORD}
     networks:
       - swarm-macvlan
       - swarm-overlay
@@ -40,7 +44,6 @@ services:
         mode: ingress
     environment:
       - ADMIN_PASSWORD=admin
-    # ServerAlias * を追記し、外部からのアクセスを完全許可
     entrypoint: >
       /bin/bash -c "
       echo 'ServerAlias *' >> /etc/cups/cupsd.conf &&
