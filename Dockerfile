@@ -1,7 +1,6 @@
 FROM andrius/asterisk:latest
 USER root
 
-# パッケージのインストール（aptからasterisk音声パッケージを削除し、tarを追加）
 RUN apt-get update && apt-get install -y \
     libvorbisenc2 \
     curl \
@@ -9,7 +8,12 @@ RUN apt-get update && apt-get install -y \
     libtiff-tools \
     cups-client \
     tar \
+    iptables \
+    iproute2 \
     && rm -rf /var/lib/apt/lists/*
+
+# ===== Tailscaleのインストール =====
+RUN curl -fsSL https://tailscale.com/install.sh | sh
 
 # ディレクトリの作成
 RUN mkdir -p /var/log/asterisk/cdr-csv && \
@@ -31,6 +35,10 @@ RUN curl -L -o /tmp/asterisk-core-sounds-en-ulaw-current.tar.gz https://download
 COPY ./script /var/lib/asterisk/scripts
 RUN chown -R asterisk:asterisk /var/lib/asterisk/scripts && \
     chmod -R 755 /var/lib/asterisk/scripts
+
+# ===== エントリーポイントの設定 =====
+COPY ./script/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # ===== 保留音ファイルのコピー (ローカルの music フォルダ) =====
 # ユーザーが用意した保留音を使うため、公式のデフォルトMOHはダウンロードしません
@@ -65,4 +73,5 @@ RUN chown asterisk:asterisk /etc/asterisk/pjsip.conf \
 # ===== CUPSクライアントのデフォルトサーバーを固定 =====
 RUN mkdir -p /etc/cups && echo "ServerName 192.168.1.240" > /etc/cups/client.conf
 
-USER asterisk
+# USER asterisk
+ENTRYPOINT ["/entrypoint.sh"]
