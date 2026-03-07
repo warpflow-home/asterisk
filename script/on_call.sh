@@ -7,8 +7,10 @@ DATETIME=$(date '+%Y-%m-%d %H:%M:%S')
 # 通知メッセージの作成
 MESSAGE="call:${CALLER_ID} (${DATETIME})"
 
-# ntfy.sh へ通知を送信 (タイトルとアイコンタグ付き)
-curl -H "Title: 着信通知" \
-     -H "Priority: default" \
-     -d "${MESSAGE}" \
-     https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+# ntfy.sh へ通知を送信 (NTFY_URLが設定されている場合のみ)
+if [ -n "$NTFY_URL" ]; then
+    curl -s -H "Title: 着信通知" \
+         -H "Priority: default" \
+         -d "${MESSAGE}" \
+         "${NTFY_URL}" > /dev/null
+fi

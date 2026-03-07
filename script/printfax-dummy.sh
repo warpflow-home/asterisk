@@ -11,16 +11,20 @@ curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pd
 CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
-    curl -H "Title: FAX印刷成功" \
-         -H "Tags: printer" \
-         -d "プリンタへデータを送信しました。" \
-         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+    if [ -n "$NTFY_URL" ]; then
+        curl -s -H "Title: FAX印刷成功" \
+             -H "Tags: printer" \
+             -d "プリンタへデータを送信しました。" \
+             "${NTFY_URL}" > /dev/null
+    fi
 else
-    curl -H "Title: FAX印刷エラー" \
-         -H "Priority: high" \
-         -H "Tags: warning" \
-         -d "CUPSへの印刷ジョブ投入に失敗しました。" \
-         https://ntfy.warpflow.net/xw53brZ6HsWlyP6A
+    if [ -n "$NTFY_URL" ]; then
+        curl -s -H "Title: FAX印刷エラー" \
+             -H "Priority: high" \
+             -H "Tags: warning" \
+             -d "CUPSへの印刷ジョブ投入に失敗しました。" \
+             "${NTFY_URL}" > /dev/null
+    fi
 fi
 
 # 一時ファイルの削除
