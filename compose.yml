@@ -13,11 +13,11 @@ services:
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
     environment:
-      - NTFY_URL=${NTFY_URL}
-      - NC_URL=${NC_URL}
-      - NC_USER=${NC_USER}
-      - NC_APP_PASSWORD=${NC_APP_PASSWORD}
-      - TS_AUTHKEY=${TS_AUTHKEY}
+      - NTFY_URL
+      - NC_URL
+      - NC_USER
+      - NC_APP_PASSWORD
+      - TS_AUTHKEY
     networks:
       - swarm-macvlan
       - swarm-overlay
