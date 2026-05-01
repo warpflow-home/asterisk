@@ -8,7 +8,7 @@ PDFFILE="/tmp/dummy_fax_$$.pdf"
 curl -sL "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" -o "$PDFFILE"
 
 # CUPSサーバーのIPと、ジョブの実行ユーザーを明示的に指定
-CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+CUPS_SERVER="localhost" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     if [ -n "$NTFY_URL" ]; then

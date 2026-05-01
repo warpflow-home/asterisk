@@ -54,7 +54,7 @@ fi
 # =========================================================
 # 3. CUPS経由で印刷実行
 # =========================================================
-CUPS_SERVER="cups" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
+CUPS_SERVER="localhost" lp -d Canon_G3060 -o media=A4 -o fit-to-page "$PDFFILE"
 
 if [ $? -eq 0 ]; then
     send_ntfy "FAX印刷成功" "default" "printer" "プリンタへデータを送信しました。"
