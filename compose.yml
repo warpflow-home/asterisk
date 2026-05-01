@@ -1,0 +1,58 @@
+services:
+  asterisk:
+    image: ghcr.io/warpflow-home/asterisk:latest
+    hostname: asterisk
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    tmpfs:
+      - /var/lib/asterisk
+      - /var/log/asterisk
+      - /var/spool/asterisk
+      - /var/log/asterisk/cdr-csv
+    env_file: ./asterisk.env
+    networks:
+      macvlan-net:
+        ipv4_address: 192.168.1.200
+      bridge-net: {}
+    volumes:
+      - ./data/tailscale:/var/lib/tailscale
+    restart: on-failure
+    healthcheck:
+      disable: true
+
+  cups:
+    image: ydkn/cups:latest
+    networks:
+      - bridge-net
+    ports:
+      - "631:631/tcp"
+    environment:
+      - ADMIN_PASSWORD=admin
+    entrypoint: >
+      /bin/bash -c "
+      echo 'ServerAlias *' >> /etc/cups/cupsd.conf &&
+      /usr/sbin/cupsd && 
+      echo 'Waiting for CUPS to start...' &&
+      while ! lpstat -r >/dev/null 2>&1; do sleep 2; done &&
+      echo 'CUPS is ready! Configuring server...' &&
+      cupsctl --remote-any --share-printers &&
+      echo 'Registering printer...' &&
+      lpadmin -p Canon_G3060 -E -v ipp://192.168.1.221/ipp/print -m everywhere -o printer-is-shared=true && 
+      lpadmin -d Canon_G3060 &&
+      echo 'Printer registered successfully!' &&
+      tail -f /var/log/cups/error_log
+      "
+    restart: on-failure
+
+networks:
+  macvlan-net:
+    driver: macvlan
+    driver_opts:
+      parent: enp1s0
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
+  bridge-net:
+    driver: bridge

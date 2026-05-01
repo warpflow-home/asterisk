@@ -1,0 +1,27 @@
+# Environment files (contains secrets)
+asterisk.env
+.env
+.env.local
+
+# Data directories
+data/
+./data/
+
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
