@@ -9,7 +9,7 @@ services:
       - /var/log/asterisk
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
-    env_file: ./asterisk.env
+    env_file: .env
     network_mode: host
     volumes:
       - ./data/tailscale:/var/lib/tailscale
