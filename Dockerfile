@@ -16,12 +16,9 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 
 # ディレクトリの作成
-RUN mkdir -p /var/log/asterisk/cdr-csv && \
-    mkdir -p /var/lib/asterisk/moh && \
+RUN mkdir -p /var/lib/asterisk/moh && \
     mkdir -p /var/lib/asterisk/sounds/en && \
     mkdir -p /var/lib/asterisk/sounds/ja && \
-    chown -R asterisk:asterisk /var/log/asterisk && \
-    chmod -R 755 /var/log/asterisk && \
     rm -f /etc/asterisk/users.conf
 
 # ===== 公式からCore Sounds (英語ガイダンス) をダウンロードして展開 =====
