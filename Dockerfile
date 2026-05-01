@@ -71,7 +71,7 @@ RUN chown asterisk:asterisk /etc/asterisk/pjsip.conf \
     /etc/asterisk/asterisk.conf
 
 # ===== CUPSクライアントのデフォルトサーバーを設定 =====
-RUN mkdir -p /etc/cups && echo "ServerName cups" > /etc/cups/client.conf
+RUN mkdir -p /etc/cups && echo "ServerName localhost" > /etc/cups/client.conf
 
 # USER asterisk
 ENTRYPOINT ["/entrypoint.sh"]
