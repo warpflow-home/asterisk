@@ -10,7 +10,7 @@ services:
       - /var/log/asterisk
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
-    env_file: ./asterisk.env
+    env_file: .env
     networks:
       macvlan-net:
         ipv4_address: 192.168.1.200
