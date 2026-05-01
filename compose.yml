@@ -5,7 +5,6 @@ services:
       - NET_ADMIN
       - SYS_NICE
     tmpfs:
-      - /var/lib/asterisk
       - /var/log/asterisk
       - /var/spool/asterisk
       - /var/log/asterisk/cdr-csv
