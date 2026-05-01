@@ -8,15 +8,14 @@ if [ ! -c /dev/net/tun ]; then
     chmod 600 /dev/net/tun
 fi
 
-# 2. tmpfs ディレクトリの初期化（起動時に毎回作成・権限設定）
+# 2. tmpfs ディレクトリの初期化（起動時に毎回サブディレクトリを作成）
 echo "Initializing tmpfs directories..."
 mkdir -p /var/log/asterisk/cdr-csv
 mkdir -p /var/spool/asterisk/outgoing
 mkdir -p /var/spool/asterisk/tmp
-chown -R asterisk:asterisk /var/log/asterisk
-chown -R asterisk:asterisk /var/spool/asterisk
-chmod -R 755 /var/log/asterisk
-chmod -R 755 /var/spool/asterisk
+chown asterisk:asterisk /var/log/asterisk/cdr-csv
+chown asterisk:asterisk /var/spool/asterisk/outgoing
+chown asterisk:asterisk /var/spool/asterisk/tmp
 
 # 3. Tailscale状態保存用ディレクトリの確認
 mkdir -p /var/lib/tailscale

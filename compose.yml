@@ -5,9 +5,9 @@ services:
       - NET_ADMIN
       - SYS_NICE
     tmpfs:
-      - /var/log/asterisk
-      - /var/spool/asterisk
-      - /var/log/asterisk/cdr-csv
+      - /var/log/asterisk:uid=1000,gid=999,mode=755
+      - /var/spool/asterisk:uid=1000,gid=999,mode=755
+      - /var/log/asterisk/cdr-csv:uid=1000,gid=999,mode=755
     env_file: .env
     network_mode: host
     volumes:
